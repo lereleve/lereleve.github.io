@@ -2,7 +2,7 @@ name: Mise à jour quotidienne
 
 on:
   schedule:
-    - cron: "15 5 * * *"   # chaque nuit vers 7 h 15, heure de Paris
+    - cron: "15 5,19 * * *"   # vers 7 h 15 et 21 h 15, heure de Paris
   push:
     branches: [main]       # à chaque modification d'un fichier du dépôt
   workflow_dispatch:       # bouton « Run workflow » dans l'onglet Actions
@@ -19,9 +19,15 @@ concurrency:
 jobs:
   construire:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Récupérer les photos déjà téléchargées
+        uses: actions/cache@v4
+        with:
+          path: site/photos
+          key: photos-${{ github.run_id }}
+          restore-keys: photos-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
