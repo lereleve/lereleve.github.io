@@ -1,33 +1,26 @@
 # Le Relevé
 
-Site de transparence parlementaire. Les votes, députés et groupes viennent des données ouvertes
-officielles de l'Assemblée nationale (Licence Ouverte), téléchargées et recalculées chaque nuit.
+Site de transparence parlementaire. Votes, députés, groupes et lois viennent exclusivement des données ouvertes
+officielles de l'Assemblée nationale (Licence Ouverte), de la 14e législature (2012) à aujourd'hui.
+Les données sont téléchargées et recalculées automatiquement deux fois par jour (vers 7 h 15 et 21 h 15).
 
-## Ce que contient ce dossier
+## Contenu du dossier
 
 - `site/index.html` : le site.
-- `site/contenu/` : les contenus éditoriaux que vous rédigez (fiches loi, fiches d'écart, corrections, mentions légales).
-- `scripts/construire_donnees.py` : télécharge les données officielles, calcule les indicateurs et vérifie vos contenus.
-- `.github/workflows/mise-a-jour.yml` : l'automatisation qui lance le script chaque nuit et publie le site.
-- `modeles/` : modèles vierges de fiches.
+- `site/contenu/site.json` : mentions légales (à remplir avant toute ouverture publique).
+- `site/contenu/lois.json` : résumés de lois rédigés par la rédaction (facultatif).
+- `site/contenu/corrections.json` : journal des corrections.
+- `scripts/construire_donnees.py` : téléchargement des données officielles et calcul des indicateurs.
+- `.github/workflows/mise-a-jour.yml` : automatisation (dossier caché sur Mac : Cmd + Maj + point pour l'afficher).
 
-## Publier une fiche loi
+## Publier un résumé de loi
 
-1. Ouvrez `modeles/fiche-loi.json`, copiez tout son contenu.
-2. Ouvrez `site/contenu/lois.json` sur GitHub, cliquez sur le crayon.
-3. Collez la fiche entre les crochets `[ ]`. S'il y a déjà une fiche, séparez-les par une virgule.
-4. Remplissez chaque champ, mettez `"publie": true`, puis « Commit changes ».
-5. Le site se met à jour en quelques minutes. En cas d'erreur de saisie, l'onglet Actions affiche la ligne en cause
-   et le site en ligne reste inchangé.
+Copiez `modeles/fiche-loi.json` dans `site/contenu/lois.json` (entre les crochets), remplissez chaque champ,
+mettez `"publie": true`. L'auteur et le vérificateur doivent être deux personnes différentes.
+En cas d'erreur de saisie, l'onglet Actions affiche la ligne en cause et le site en ligne reste inchangé.
 
-Le numéro `scrutin` est celui du scrutin officiel (visible dans l'onglet Votes du site).
-L'identifiant `depute` (PA suivi de chiffres) figure dans l'adresse de la fiche du député sur le site.
+## Avant l'ouverture publique
 
-## Règles à ne jamais contourner
-
-- Le dépôt est public : ne préparez jamais une fiche d'écart ici. Rédigez-la ailleurs, et ne l'ajoutez à
-  `revirements.json` qu'après vérification par une seconde personne, sollicitation du député (48 heures ouvrées)
-  et, pour les premières fiches, relecture juridique.
-- Toute citation est intégrale et liée à sa source horodatée, avec une copie archivée.
-- Avant d'ouvrir le site au public : remplissez `site/contenu/site.json` (directeur de la publication, contact),
-  puis retirez la ligne `<meta name="robots" content="noindex, nofollow">` de `site/index.html`.
+1. Remplir `site/contenu/site.json` (éditeur, directeur de la publication, contact).
+2. Faire relire les mentions légales et la méthode par un juriste (une clinique juridique universitaire convient).
+3. Retirer la ligne `<meta name="robots" content="noindex, nofollow">` de `site/index.html`.
