@@ -1,0 +1,11 @@
+{
+  "publie": false,
+  "dossier": "Identifiant du dossier officiel (DLR5L17N…), visible dans l'adresse de la fiche loi sur le site",
+  "titre_officiel": "Titre du dossier, tel qu'affiché sur la fiche loi",
+  "phrase": "Ce que le texte change, pour qui, en 25 mots maximum.",
+  "change": [["Avant", "Après", "Qui est concerné"]],
+  "pasfait": ["Une idée reçue que le texte ne réalise pas, avec l'article qui le montre."],
+  "auteur": "Prénom Nom",
+  "verif": "Prénom Nom (une autre personne)",
+  "version": {"n": 1, "date": "date de publication"}
+}
