@@ -1,0 +1,30 @@
+{
+  "id": "e-2026-001",
+  "publie": false,
+  "ref": "E-2026-001",
+  "depute": "PA000000",
+  "statut": "assumee | non | contestee",
+  "comparabilite": "identique | proche",
+  "publie_le": "2026-01-31",
+  "titre": "Prénom Nom : sa position sur [mesure] en [année], son vote en [année]",
+  "court": "Version courte du titre pour la fiche du député",
+  "declaration": {
+    "date": "2023-10-03",
+    "support": "Média ou lieu, émission",
+    "minutage": "à 14 min 32 s",
+    "question": "La question posée, mot pour mot (ou laisser vide et remplir « contexte »)",
+    "contexte": "",
+    "avant": "Début de la phrase citée, ",
+    "surligne": "passage exact en tension avec le vote",
+    "apres": ". Fin de la phrase citée.",
+    "url": "Lien vers la vidéo à l'horodatage exact ou vers le compte rendu",
+    "archive": "Lien vers la copie archivée (web.archive.org ou archive.today)"
+  },
+  "scrutin": 1234,
+  "entre_temps": [["date", "Ce qui s'est passé entre la déclaration et le vote et qui peut l'expliquer"]],
+  "reponse": {"sollicite": "2026-01-20", "relance": "", "recue": "", "texte": ""},
+  "note": "",
+  "pieces": [{"titre": "Description de la pièce", "url": "https://...", "archive": "https://..."}],
+  "auteur": "Prénom Nom",
+  "verif": "Prénom Nom (une autre personne)"
+}

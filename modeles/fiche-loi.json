@@ -1,0 +1,25 @@
+{
+  "id": "identifiant-court-sans-espace",
+  "publie": false,
+  "usage": "Nom d'usage du texte, par exemple « Loi sur … »",
+  "titre": "Titre officiel complet, copié du site de l'Assemblée",
+  "numero": "Numéro du texte",
+  "ref": "L-2026-001",
+  "theme": "Thème",
+  "statut": "Où en est le texte, en une ligne",
+  "scrutin": 1234,
+  "etapes": [["Dépôt", "date"], ["Commission", "date"], ["Assemblée", "date"], ["Sénat", ""], ["CMP ou navette", ""], ["Adoption définitive", ""], ["Conseil constitutionnel", ""], ["Promulgation", ""]],
+  "etape": 3,
+  "phrase": "Ce que le texte change, pour qui, en 25 mots maximum.",
+  "change": [["Avant", "Après", "Qui est concerné"]],
+  "pasfait": ["Une idée reçue que le texte ne réalise pas, avec l'article qui le montre."],
+  "arguments": {
+    "pour": [{"texte": "Argument des partisans, reformulé.", "source": "Compte rendu intégral, séance du …, intervention de …", "url": "https://www.assemblee-nationale.fr/..."}],
+    "contre": [{"texte": "Argument des opposants, de longueur comparable.", "source": "Compte rendu intégral, séance du …", "url": "https://www.assemblee-nationale.fr/..."}]
+  },
+  "chiffres": [{"texte": "Un chiffre de l'étude d'impact, page précisée.", "url": "https://..."}],
+  "pieces": [{"titre": "Texte adopté", "url": "https://..."}],
+  "auteur": "Prénom Nom",
+  "verif": "Prénom Nom (une autre personne)",
+  "version": {"n": 1, "date": "date de publication", "hist": [["date", "Publication."]]}
+}
