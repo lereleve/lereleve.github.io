@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Le Relevé : construit les données du site à partir des données ouvertes officielles
 de l'Assemblée nationale (Licence Ouverte). Python 3.9 ou plus, aucune dépendance."""
-import datetime, html, io, json, os, re, statistics, sys, time, urllib.parse, urllib.request, zipfile
+import datetime, html, io, json, os, re, statistics, sys, time, urllib.error, urllib.parse, urllib.request, zipfile
 
 R = "https://data.assemblee-nationale.fr/static/openData/repository/"
 LEGISLATURES = [
@@ -214,10 +214,15 @@ def votants(bloc):
         return []
     return [txt(v.get("acteurRef")) for v in liste(bloc.get("votant")) if isinstance(v, dict)]
 
-def charger_scrutins(data):
-    out, ecarts = [], 0
+def charger_scrutins(data, organes=None):
+    organes = organes or {}
+    out, ecarts, congres = [], 0, 0
     for obj in jsons(data):
         for s in trouver(obj, "scrutin"):
+            org = organes.get(txt(s.get("organeRef")), {})
+            if org.get("type") == "CONGRES" or "congrès" in org.get("libelle", "").lower():
+                congres += 1
+                continue
             synth = s.get("syntheseVote") or {}
             dec = synth.get("decompte") or {}
             tv = s.get("typeVote") or {}
@@ -230,7 +235,7 @@ def charger_scrutins(data):
                   "po": entier(premier(dec, "pour", "pours")), "co": entier(premier(dec, "contre", "contres")),
                   "ab": entier(premier(dec, "abstentions", "abstention")),
                   "nv": entier(premier(dec, "nonVotants", "nonVotant")) + entier(dec.get("nonVotantsVolontaires")),
-                  "groupes": [], "votes": {}, "mises": []}
+                  "groupes": [], "votes": {}, "mises": [], "org": txt(s.get("organeRef"))}
             organe = (s.get("ventilationVotes") or {}).get("organe") or {}
             somme = 0
             for g in liste((organe.get("groupes") or {}).get("groupe")):
@@ -259,7 +264,20 @@ def charger_scrutins(data):
                         sc["mises"].append([ref, code])
             if sc["n"] and sc["d"]:
                 out.append(sc)
-    out.sort(key=lambda x: x["n"])
+    compte_org = {}
+    for sc in out:
+        compte_org[sc["org"]] = compte_org.get(sc["org"], 0) + 1
+    principal = max(compte_org, key=compte_org.get) if compte_org else ""
+    autres = [sc for sc in out if sc["org"] and sc["org"] != principal]
+    if autres:
+        congres += len(autres)
+        out = [sc for sc in out if not sc["org"] or sc["org"] == principal]
+    uniques = {}
+    for sc in out:
+        uniques.setdefault(sc["n"], sc)
+    out = sorted(uniques.values(), key=lambda x: x["n"])
+    if congres:
+        print(f"  {congres} scrutin(s) du Congrès du Parlement écarté(s)")
     print(f"  scrutins : {len(out)} ; votes nominatifs : {sum(len(s['votes']) for s in out)}" + (f" ; {ecarts} totaux de groupe différents du total officiel" if ecarts else ""))
     return out
 
@@ -348,6 +366,32 @@ def lire_commons(donnees):
                                             "vignette": ii.get("thumburl"), "page": ii.get("descriptionurl")}
     return infos
 
+def image_valide(chemin):
+    try:
+        if os.path.getsize(chemin) < 1500:
+            return False
+        with open(chemin, "rb") as fh:
+            tete = fh.read(12)
+        return tete[:3] == b"\xff\xd8\xff" or tete[:8] == b"\x89PNG\r\n\x1a\n" or tete[:4] == b"GIF8" or (tete[:4] == b"RIFF" and tete[8:12] == b"WEBP")
+    except OSError:
+        return False
+
+def telecharger_image(url):
+    for essai in range(4):
+        try:
+            data = obtenir(url, timeout=60)
+            if len(data) >= 1500:
+                return data
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 503):
+                attente = int(e.headers.get("Retry-After") or 0) or 5 * (essai + 1)
+                time.sleep(min(attente, 60))
+                continue
+            return None
+        except Exception:
+            time.sleep(2)
+    return None
+
 def photos_libres(ids):
     """Retourne {PA…: {f, a, l, u}} ; conserve les vignettes déjà téléchargées (cache)."""
     dossier = os.path.join(SITE, "photos")
@@ -369,10 +413,10 @@ def photos_libres(ids):
         for i in range(0, len(noms), 40):
             titres = "|".join("File:" + n for n in noms[i:i + 40])
             url = ("https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo"
-                   "&iiprop=url|extmetadata&iiurlwidth=240&titles=" + urllib.parse.quote(titres))
+                   "&iiprop=url|extmetadata&iiurlwidth=250&titles=" + urllib.parse.quote(titres))
             infos.update(lire_commons(json.loads(obtenir(url))))
             time.sleep(0.2)
-        nouveaux = refus = 0
+        nouveaux = refus = echecs = 0
         for an, nom in fichiers.items():
             info = infos.get("File:" + nom) or infos.get("Fichier:" + nom)
             if not info or not info["libre"] or not info["vignette"]:
@@ -381,17 +425,23 @@ def photos_libres(ids):
                 continue
             ext = os.path.splitext(info["vignette"].split("?")[0])[1].lower() or ".jpg"
             f = f"photos/{an}{ext}"
-            if not os.path.exists(os.path.join(SITE, f)):
-                try:
-                    open(os.path.join(SITE, f), "wb").write(obtenir(info["vignette"], timeout=60))
-                    nouveaux += 1
-                    time.sleep(0.05)
-                except Exception as e:
-                    print(f"  vignette ignorée {an} : {e}")
+            chemin = os.path.join(SITE, f)
+            if not image_valide(chemin):
+                contenu = telecharger_image(info["vignette"])
+                if not contenu:
+                    echecs += 1
+                    credits.pop(an, None)
                     continue
+                with open(chemin + ".tmp", "wb") as fh:
+                    fh.write(contenu)
+                os.replace(chemin + ".tmp", chemin)
+                nouveaux += 1
+                time.sleep(0.25)
             credits[an] = {"f": f, "a": info["auteur"], "l": info["licence"], "u": info["page"]}
         json.dump(credits, open(chemin_credits, "w", encoding="utf-8"), ensure_ascii=False)
-        print(f"  {len(credits)} photos sous licence libre ({nouveaux} nouvelles) ; {refus} écartées (licence non libre ou introuvable)")
+        credits = {k: v for k, v in credits.items() if image_valide(os.path.join(SITE, v["f"]))}
+        json.dump(credits, open(chemin_credits, "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"  {len(credits)} photos sous licence libre ({nouveaux} nouvelles) ; {refus} écartées (licence non libre ou introuvable) ; {echecs} téléchargements à reprendre au prochain passage")
     except Exception as e:
         print(f"Photos : collecte interrompue ({e}), le site est construit sans nouvelles photos")
     return credits
@@ -413,7 +463,7 @@ def construire_legislature(L, acteurs, organes, aujourd_hui, credits=None):
     data = telecharger(L["scrutins"], L.get("requis", False))
     if not data:
         return None
-    scrutins = charger_scrutins(data)
+    scrutins = charger_scrutins(data, organes)
     del data
     if len(scrutins) < 100:
         if L.get("requis"):
